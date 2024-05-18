@@ -2,10 +2,14 @@
   "name": "sleep_tracker",
   "version": "1.0.0",
   "description": "Backend app for tracking sleep",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "author": "Ankush Mahanty",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
 }
