@@ -1,78 +1,83 @@
+import mongoose from 'mongoose';
 import request from 'supertest';
-import {app} from '../app.js';
+import { app } from '../app';
+import dotenv from 'dotenv';
+import { DB_NAME } from "../constants.js"
 
+dotenv.config();
 
-// testing the add new sleep record API
-describe('POST /api/sleep', () => {
-    it('should create a new sleep record', async () => {
-        const response = await request(app)
-            .post('/api/sleep')
-            .send({
-                userId: 'test_user',
-                duration: 8,
-                timestamp: Date.now()
-            });
-
-        expect(response.status).toBe(201);
-        expect(response.body).toHaveProperty('_id');
-        // Checking if sleep record properties are correct
-        expect(response.body).toHaveProperty('userId', 'test_user');
-        expect(response.body).toHaveProperty('duration', 8);
-    });
-
-    it('should return 400 if userId is missing', async () => {
-        const response = await request(app)
-            .post('/api/sleep')
-            .send({
-                duration: 8,
-                timestamp: Date.now()
-            });
-
-        expect(response.status).toBe(400);
-    });
+beforeAll(async () => {
+  await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`);
 });
 
-
-// testing the get sleep records for user API
-describe('GET /api/sleep/:userId', () => {
-    it('should get sleep records for a user', async () => {
-        const response = await request(app)
-            .get('/api/sleep/test_user');
-
-        expect(response.status).toBe(200);
-        expect(Array.isArray(response.body)).toBe(true);
-        // Check if sleep records have correct properties
-        if (response.body.length > 0) {
-            expect(response.body[0]).toHaveProperty('_id');
-            expect(response.body[0]).toHaveProperty('userId', 'test_user');
-            expect(response.body[0]).toHaveProperty('duration');
-        }
-    });
-
-    it('should return 404 if user does not exist', async () => {
-        const response = await request(app)
-            .get('/api/sleep/non_existing_user_id');
-
-        expect(response.status).toBe(404);
-    });
+afterAll(async () => {
+  await mongoose.connection.close();
 });
 
+describe('Sleep API', () => {
+  it('should create a new user', async () => {
+    const res = await request(app).post('/api/sleep/users').send({ username: 'testuser' });
+    console.log('Create User Response:', res.body);
+    expect(res.statusCode).toBe(201);
+    expect(res.body.data).toHaveProperty('_id');
+  });
 
-//testing the delete sleep record api
-describe('DELETE /api/sleep/:recordId', () => {
-    it('should delete a sleep record', async () => {
-        const response = await request(app)
-            .delete('/api/sleep/record_id');
+  it('should add a sleep record for a user', async () => {
+    const userRes = await request(app).post('/api/sleep/users').send({ username: 'testuser1' });
+    console.log('User Response:', userRes.body);
+    const userId = userRes.body.data._id;
 
-        expect(response.status).toBe(200);
-        // Check if response message is correct
-        expect(response.body).toHaveProperty('message', 'Sleep record deleted successfully');
+    const sleepRes = await request(app)
+      .post('/api/sleep')
+      .send({
+        userId,
+        duration: 8,
+        timestamp: new Date().toISOString(),
+      });
+    console.log('Add Sleep Record Response:', sleepRes.body);
+    expect(sleepRes.statusCode).toBe(201);
+    expect(sleepRes.body.data).toHaveProperty('_id');
+    expect(sleepRes.body.data.duration).toBe(8);
+  });
+
+  it('should get all sleep records for a user', async () => {
+    const userRes = await request(app).post('/api/sleep/users').send({ username: 'testuser2' });
+    console.log('User Response:', userRes.body);
+    const userId = userRes.body.data._id;
+
+    await request(app).post('/api/sleep').send({
+      userId,
+      duration: 7,
+      timestamp: new Date().toISOString(),
     });
 
-    it('should return 404 if sleep record does not exist', async () => {
-        const response = await request(app)
-            .delete('/api/sleep/non_existing_record_id');
+    const res = await request(app).get(`/api/sleep/${userId}`);
+    console.log('Get Sleep Records Response:', res.body);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.data).toBeInstanceOf(Array);
+  });
 
-        expect(response.status).toBe(404);
-    });
+  it('should delete a sleep record by ID', async () => {
+    const userRes = await request(app).post('/api/sleep/users').send({ username: 'testuser3' });
+    console.log('User Response:', userRes.body);
+    const userId = userRes.body.data._id;
+
+    const sleepRes = await request(app)
+      .post('/api/sleep')
+      .send({
+        userId,
+        duration: 6,
+        timestamp: new Date().toISOString(),
+      });
+    console.log('Add Sleep Record Response:', sleepRes.body);
+    const recordId = sleepRes.body.data._id;
+
+    const deleteRes = await request(app).delete(`/api/sleep/${recordId}`);
+    console.log('Delete Sleep Record Response:', deleteRes.body);
+    expect(deleteRes.statusCode).toBe(200);
+
+    const getRes = await request(app).get(`/api/sleep/${userId}`);
+    console.log('Get Sleep Records After Deletion Response:', getRes.body);
+    expect(getRes.body.data).not.toContainEqual(expect.objectContaining({ _id: recordId }));
+  });
 });

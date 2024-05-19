@@ -8,23 +8,34 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 // Creating a new user
 export const createUser = asyncHandler(async (req, res) => {
     try {
-      // Creating a new user with an empty sleepRecord array
-      const newUser = await User.create({ sleepRecord: [] });
+      
+      const {username} = req.body
+      console.log("username: ", username);
+
+      const existingUser = await User.findOne({username})
+
+      if(existingUser){
+        throw new ApiError(409, "User with this username already exists")
+      }
+
+      const user = await User.create({
+        username: username.toLowerCase(),
+        sleepRecord: []
+      })
   
       res.status(201).json(
         new ApiResponse(
           201,
-          newUser,
+          user,
           "User created successfully"
         )
       );
     } catch (error) {
-      throw new ApiError(400, "Error creating user");
+      console.error("Error creating user:", error);
+      throw new ApiError(400, "Error creating user: " + error.message);
     }
 });
-
-
-  
+ 
 
 // Adding a sleep record for a user
 export const addSleepRecord = asyncHandler(async (req, res) => {
@@ -52,7 +63,7 @@ export const addSleepRecord = asyncHandler(async (req, res) => {
             )
         );
     } catch (error) {
-        throw new ApiError(400, "Error is creating sleep record")
+        throw new ApiError(400, "Error is creating sleep record: ", error.message)
     }
 });
 
@@ -104,7 +115,7 @@ export const getSleepRecordsByUserId = asyncHandler(async (req, res) => {
 export const deleteSleepRecordById = asyncHandler(async (req, res) => {
   try {
     const recordId = req.params.recordId;
-    // Checking if the sleep record exists
+    // matching with record id and deleting
     const deletionResult = await Sleep.deleteOne({ _id: recordId });
 
     if (deletionResult.deletedCount === 0) {
