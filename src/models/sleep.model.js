@@ -8,6 +8,11 @@ const sleepSchema = new Schema({
     duration: {
         type: Number,
         required: true
+    },
+    timestamp: {
+        type: Date,
+        required: true,
+        default: Date.now
     }
 },{
     timestamps : true
