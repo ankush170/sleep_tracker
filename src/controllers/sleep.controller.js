@@ -4,34 +4,56 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {asyncHandler} from "../utils/asyncHandler.js"
 
-// Adding a sleep record for a user
-export const addSleepRecord = asyncHandler (async (req, res) => {
-  try {
-    const { userId, duration, timestamp } = req.body;
 
-    // Checking if the user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new ApiError(409, "User not found");
-    }
-
-    // Creating a new sleep record
-    const sleepRecord = await Sleep.create({ user: userId, duration, timestamp });
-
-    // Updating the user's sleepRecord array
-    user.sleepRecord.push(sleepRecord._id);
-    await user.save();
-
-    res.status(201).json(
+// Creating a new user
+export const createUser = asyncHandler(async (req, res) => {
+    try {
+      // Creating a new user with an empty sleepRecord array
+      const newUser = await User.create({ sleepRecord: [] });
+  
+      res.status(201).json(
         new ApiResponse(
-            200,
-            sleepRecord,
-            "Sleep record created Successfully"
+          201,
+          newUser,
+          "User created successfully"
         )
-    );
-  } catch (error) {
-    throw new ApiError(400, "Error is creating sleep record")
-  }
+      );
+    } catch (error) {
+      throw new ApiError(400, "Error creating user");
+    }
+});
+
+
+  
+
+// Adding a sleep record for a user
+export const addSleepRecord = asyncHandler(async (req, res) => {
+    try {
+        const { userId, duration, timestamp } = req.body;
+
+        // Checking if the user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new ApiError(409, "User not found");
+        }
+
+        // Creating a new sleep record
+        const sleepRecord = await Sleep.create({ user: user._id, duration, timestamp });
+
+        // Updating the user's sleepRecord array
+        user.sleepRecord.push(sleepRecord._id);
+        await user.save();
+
+        res.status(201).json(
+            new ApiResponse(
+                200,
+                sleepRecord,
+                "Sleep record created Successfully"
+            )
+        );
+    } catch (error) {
+        throw new ApiError(400, "Error is creating sleep record")
+    }
 });
 
 
@@ -39,29 +61,40 @@ export const addSleepRecord = asyncHandler (async (req, res) => {
 
 
 // Get all sleep records for a user
-export const getSleepRecordsByUserId = asyncHandler( async (req, res) => {
-  try {
-    const userId = req.params.userId;
+export const getSleepRecordsByUserId = asyncHandler(async (req, res) => {
+    try {
+        const userId = req.params.userId;
 
-    // Checking if the user exists
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new ApiError(404, "User not found");
+        // Checking if the user exists
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        // Using aggregation pipeline to fetch sleep records for the user
+        const sleepRecords = await Sleep.aggregate([
+            {
+                $match: {
+                    user: user._id
+                }
+            },
+            {
+                $sort: {
+                    timestamp: 1
+                }
+            }
+        ]);
+
+        res.status(200).json(
+            new ApiResponse(
+                200,
+                sleepRecords,
+                "Sleep records for user fetched successfully"
+            )
+        );
+    } catch (error) {
+        throw new ApiError(400, "Error fetching sleep records for user");
     }
-
-    // Populating the sleep records for the user
-    await user.populate("sleepRecord").execPopulate();
-
-    res.status(200).json(
-        new ApiResponse(
-            200,
-            user.sleepRecord,
-            "Sleep records for user fetched succesfully"
-        )
-    );
-  } catch (error) {
-    throw new ApiError(400, "Error fetching sleep records for user")
-  }
 });
 
 
@@ -71,20 +104,12 @@ export const getSleepRecordsByUserId = asyncHandler( async (req, res) => {
 export const deleteSleepRecordById = asyncHandler(async (req, res) => {
   try {
     const recordId = req.params.recordId;
-
     // Checking if the sleep record exists
-    const sleepRecord = await Sleep.findById(recordId);
-    if (!sleepRecord) {
-      throw new ApiError(404, "Sleep record not found");
+    const deletionResult = await Sleep.deleteOne({ _id: recordId });
+
+    if (deletionResult.deletedCount === 0) {
+        throw new ApiError(404, "Sleep record not found");
     }
-
-    // Remove the sleep record from the user's sleepRecord array
-    await User.findByIdAndUpdate(sleepRecord.user, {
-      $pull: { sleepRecord: recordId },
-    });
-
-    // Delete the sleep record
-    await sleepRecord.remove();
 
     return res
     .status(200)

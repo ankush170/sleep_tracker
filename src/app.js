@@ -10,4 +10,4 @@ app.use(express.json());
 //route declaration
 app.use('/api/sleep', sleepRouter);
 
-export default app;
+export {app};

@@ -4,20 +4,31 @@
   "description": "Backend app for tracking sleep",
   "type": "module",
   "main": "index.js",
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    }
+  },
   "scripts": {
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "jest"
   },
   "author": "Ankush Mahanty",
   "license": "ISC",
   "devDependencies": {
+    "@babel/core": "^7.24.5",
     "@babel/preset-env": "^7.24.5",
     "@babel/register": "^7.23.7",
+    "babel-jest": "^29.7.0",
+    "esm": "^3.2.25",
     "jest": "^29.7.0",
     "nodemon": "^3.1.0",
     "supertest": "^7.0.0"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "mongoose": "^8.4.0"
   }
 }
