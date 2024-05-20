@@ -1,7 +1,7 @@
 ### Sleep Tracker API
 The Sleep Tracker API is a backend application for tracking sleep records of users. It allows users to create accounts, add sleep records, retrieve sleep records, and delete sleep records.
 
-# Setup
+## Setup
 Prerequisites: 
 Before running the API, ensure you have the following installed:
 
@@ -9,7 +9,7 @@ Node.js
 MongoDB
 
 
-# Installation
+## Installation
 Clone the repository:
 git clone <https://github.com/ankush170/sleep_tracker>
 
@@ -28,8 +28,9 @@ npm run dev
 
 the application is now running on http://localhost:8000
 
-# Endpoints
-1. Create a new user
+## Endpoints
+
+# 1. Create a new user
 URL: /api/sleep/users
 Method: POST
 Request Body:
@@ -63,8 +64,14 @@ Code: 400 BAD REQUEST
 
 Content: { "message": "Error creating user: error_message" }
 
+POSTMAN CURL: curl --location 'http://localhost:8000/api/sleep/users' \
+--header 'Content-Type: application/json' \
+--data '{
+    "username" : "test2"
+}'
 
-2. Add a sleep record for a user
+
+# 2. Add a sleep record for a user
 
 URL: /api/sleep
 Method: POST
@@ -97,8 +104,16 @@ Code: 400 BAD REQUEST
 
 Content: { "message": "Error creating sleep record" }
 
+POSTMAN CURL: curl --location 'http://localhost:8000/api/sleep/' \
+--header 'Content-Type: application/json' \
+--data '{
+    "userId" : "664a5af592f1bd9d08183cda",
+    "duration" : 8,
+    "timestamp": "2024-05-10T08:02:00.000Z"
+}'
 
-3. Get all sleep records for a user
+
+# 3. Get all sleep records for a user
 
 URL: /api/sleep/:userId
 Method: GET
@@ -127,7 +142,11 @@ Code: 404 NOT FOUND
 Content: { "message": "User not found" }
 
 
-4. Delete a sleep record by ID
+POSTMAN CURL: curl --location 'http://localhost:8000/api/sleep/664a5af592f1bd9d08183cda' \
+--data ''
+
+
+# 4. Delete a sleep record by ID
 
 URL: /api/sleep/:recordId
 Method: DELETE
@@ -141,6 +160,8 @@ Content: { "status": 200, "message": "Sleep record deleted successfully" }
 Error Response:
 Code: 404 NOT FOUND
 Content: { "message": "Sleep record not found" }
+
+POSTMAN CURL: curl --location --request DELETE 'http://localhost:8000/api/sleep/664a5b9e92f1bd9d08183cdd'
 
 
 
