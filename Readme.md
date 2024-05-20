@@ -15,8 +15,8 @@ git clone <https://github.com/ankush170/sleep_tracker>
 
 Install deprlendencies:
 
-cd sleep_tracker
-npm install
+"cd sleep_tracker",
+"npm install"
 
 
 Configure environment variables:
@@ -24,7 +24,7 @@ Create a .env file in the root directory and provide the variables mentioned in 
 
 Start the server:
 
-npm run dev
+"npm run dev"
 
 the application is now running on http://localhost:8000
 
@@ -169,4 +169,4 @@ POSTMAN CURL: curl --location --request DELETE 'http://localhost:8000/api/sleep/
 
 To run tests:
 
-npm run test
+"npm run test"
